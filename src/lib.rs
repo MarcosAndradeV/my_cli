@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, process::exit};
 
 /// A simple CLI.
 /// `inputs` are anything that does not starts with `-` and `flags` are anything that does starts with `-`
@@ -90,17 +90,24 @@ impl MyCLI {
                 Some(None) => {
                     matched_flags.insert(flag.clone(), None);
                 }
-                Some(Some(_)) => loop {
+                Some(Some(a)) => loop {
                     match args.next() {
                         Some((n, v)) if cmd.args.get(n).is_some() => {
                             matched_args.insert(cmd.args.get(n).cloned().unwrap(), v.clone());
                             continue;
                         }
-                        Some((_, v)) => {
+                        Some((_, v)) if v.starts_with("-") => {
                             matched_flags.insert(flag.clone(), Some(v.clone()));
                             break;
                         }
-                        None => return None,
+                        Some((at, v)) => {
+                            eprintln!("ERROR: Unexpected positional argument `{v}` at position {at}");
+                            exit(-1);
+                        }
+                        None => {
+                            eprintln!("ERROR: flag `{flag}` expects a argument <{a}>");
+                            exit(-1);
+                        },
                     }
                 },
                 None => return None,
@@ -110,7 +117,10 @@ impl MyCLI {
         for (n, v) in args {
             let k = match cmd.args.get(n).cloned() {
                 Some(ok) => ok,
-                None => return None,
+                None => {
+                    eprintln!("ERROR: Unexpected positional argument `{v}` at position {n}");
+                    exit(-1);
+                },
             };
             matched_args.insert(k, v.clone());
         }
