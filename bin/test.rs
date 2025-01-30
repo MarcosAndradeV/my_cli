@@ -16,7 +16,7 @@ fn main() {
             if let Some(msg) = args.get("msg") {
                 println!("You say: \"{msg}\"");
             } else {
-                println!("Expected msg");
+                println!("ERROR: Expected msg");
             }
         }
         Some(("sayTo", flags, args)) => {
