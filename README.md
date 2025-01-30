@@ -4,10 +4,14 @@ A simple rust cli library inspired by clap builder.
 
 # Usage
 
-Justa copy an paste into your project. :)
+```console
+$ cargo add my_cli
+```
+
+or
 
 ```console
-$ git clone git@github.com:MarcosAndradeV/my_cli.git
+$ git clone git@github.com:MarcosAndradeV/my_cli.git # Just copy an paste into your project. :)
 ```
 
 # Example
