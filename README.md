@@ -2,6 +2,10 @@
 
 A simple rust cli library inspired by clap builder.
 
+# Status
+
+WIP but is usable.
+
 # Usage
 
 Justa copy an paste into your project. :)
