@@ -71,10 +71,10 @@ impl MyCLI {
         &self,
     ) -> Option<(
         &str,
-        HashMap<String, Option<String>>,
+        MatchedFlags,
         HashMap<String, String>,
     )> {
-        let mut matched_flags: HashMap<String, Option<String>> = Default::default();
+        let mut matched_flags: MatchedFlags = Default::default();
         let mut matched_args: HashMap<String, String> = Default::default();
         let subcommand = match self.subcommand {
             Some(ref sc) => sc,
@@ -152,6 +152,27 @@ impl MyCLI {
             let part2 = format!("{:>w$}", descripition);
             println!("{part1}   {part2}")
         }
+    }
+}
+
+#[derive(Default)]
+pub struct MatchedFlags(HashMap<String, Option<String>>);
+
+impl MatchedFlags {
+    pub fn get(&self, k: &str) -> Option<&String> {
+        if let Some(v) = self.0.get(k) {
+            v.as_ref()
+        } else {
+            None
+        }
+    }
+
+    pub fn is_present(&self, k: &str) -> bool {
+        self.0.get(k).is_some()
+    }
+
+    pub fn insert(&mut self, k: String, v: Option<String>) -> Option<Option<String>> {
+        self.0.insert(k, v)
     }
 }
 
