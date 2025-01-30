@@ -11,6 +11,7 @@ pub struct MyCLI {
     inputs: Vec<(u64, String)>,
 
     cmds: HashMap<String, Cmd>,
+    usage: Vec<(String, String)>
 }
 
 impl MyCLI {
@@ -114,8 +115,20 @@ impl MyCLI {
     }
 
     pub fn add_cmd(mut self, name: &'static str, cmd: Cmd) -> Self {
+        self.usage.push((name.to_string(), cmd.help.clone().unwrap_or(String::new())));
         self.cmds.insert(name.to_string(), cmd);
         self
+    }
+
+    pub fn usage(&self) {
+        println!("Usage: {} <COMMAND> [OPTIONS] [ARGS]", self.program);
+        println!("COMMANDS:");
+
+        for (name, descripition) in self.usage.iter() {
+            println!(
+                "      {name: <7}      {descripition}",
+            );
+        }
     }
 }
 
@@ -123,11 +136,17 @@ impl MyCLI {
 pub struct Cmd {
     args: HashMap<u64, String>,
     flags: HashMap<String, Option<String>>,
+    help: Option<String>
 }
 
 impl Cmd {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn help(mut self, help: &str) -> Self {
+        self.help = Some(help.to_string());
+        self
     }
 
     pub fn arg(mut self, name: &str, pos: u64) -> Self {
