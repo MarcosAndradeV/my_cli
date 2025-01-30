@@ -11,7 +11,7 @@ pub struct MyCLI {
     inputs: Vec<(u64, String)>,
 
     cmds: HashMap<String, Cmd>,
-    usage: Vec<(String, String)>
+    usage: Vec<(String, String, String)>
 }
 
 impl MyCLI {
@@ -108,25 +108,30 @@ impl MyCLI {
         }
 
         for (n, v) in args {
-            matched_args.insert(cmd.args.get(n).cloned().unwrap(), v.clone());
+            let k = match cmd.args.get(n).cloned() {
+                Some(ok) => ok,
+                None => return None,
+            };
+            matched_args.insert(k, v.clone());
         }
 
         Some((self.subcommand.as_ref().unwrap().as_str(), matched_flags, matched_args))
     }
 
     pub fn add_cmd(mut self, name: &'static str, cmd: Cmd) -> Self {
-        self.usage.push((name.to_string(), cmd.help.clone().unwrap_or(String::new())));
+        let get_help = cmd.get_help();
+        self.usage.push((name.to_string(), get_help.0, get_help.1));
         self.cmds.insert(name.to_string(), cmd);
         self
     }
 
     pub fn usage(&self) {
-        println!("Usage: {} <COMMAND> [OPTIONS] [ARGS]", self.program);
+        println!("Usage: {} <COMMAND> [ARGS] [[-|--]FLAG]", self.program);
         println!("COMMANDS:");
 
-        for (name, descripition) in self.usage.iter() {
+        for (name, args, descripition) in self.usage.iter() {
             println!(
-                "      {name: <7}      {descripition}",
+                "      {name} {args: <7}      {descripition}",
             );
         }
     }
@@ -162,5 +167,26 @@ impl Cmd {
     pub fn flag_bool(mut self, name: &str) -> Self {
         self.flags.insert(name.to_string(), None);
         self
+    }
+
+    fn get_help(&self) -> (String, String) {
+        let mut args = String::new();
+        let mut iter = self.args.iter().collect::<Vec<(&u64, &String)>>();
+        iter.sort_by(|a, b| a.0.cmp(b.0));
+        for (_, arg) in iter {
+            args.push_str(&format!("<{arg}>"));
+        }
+
+        let mut iter = self.flags.iter().collect::<Vec<_>>();
+        iter.sort();
+        for (fname, arg) in iter {
+            if let Some(arg) = arg {
+                args.push_str(&format!(" [{fname} "));
+                args.push_str(&format!("<{arg}>]"));
+            } else {
+                args.push_str(&format!(" [{fname}] "));
+            }
+        }
+        (args, self.help.clone().unwrap_or_default())
     }
 }
