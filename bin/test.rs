@@ -21,7 +21,7 @@ fn main() {
         }
         Some(("sayTo", flags, args)) => {
             if let Some(msg) = args.get("msg") {
-                if let Some(Some(name)) = flags.get("-t") {
+                if let Some(name) = flags.get("-t") {
                     println!("You say: \"{msg}\"\nTo: {name}");
                 } else {
                     println!("You say: \"{msg}\"");

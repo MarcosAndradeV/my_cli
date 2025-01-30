@@ -1,10 +1,9 @@
 [package]
 name = "my_cli"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Marcos V. Andrade Almeida"]
 license = "MIT"
-license-file = "LICENSE"
 description = "A simple cli library inspired by Clap builder."
 readme = "README.md"
 repository = "https://github.com/MarcosAndradeV/my_cli"
