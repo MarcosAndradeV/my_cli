@@ -3,7 +3,7 @@ use my_cli::*;
 fn main() {
     let cl = MyCLI::create_from_args()
         .add_cmd("say", Cmd::new().arg("msg", 1)
-            .help("prints the message.")
+            .help("Prints the message.")
         )
         .add_cmd("sayTo",
             Cmd::new()

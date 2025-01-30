@@ -11,7 +11,7 @@ pub struct MyCLI {
     inputs: Vec<(u64, String)>,
 
     cmds: HashMap<String, Cmd>,
-    usage: Vec<(String, String, String)>
+    usage: Vec<(String, String, String)>,
 }
 
 impl MyCLI {
@@ -94,8 +94,8 @@ impl MyCLI {
                     match args.next() {
                         Some((n, v)) if cmd.args.get(n).is_some() => {
                             matched_args.insert(cmd.args.get(n).cloned().unwrap(), v.clone());
-                            continue
-                        },
+                            continue;
+                        }
                         Some((_, v)) => {
                             matched_flags.insert(flag.clone(), Some(v.clone()));
                             break;
@@ -115,7 +115,11 @@ impl MyCLI {
             matched_args.insert(k, v.clone());
         }
 
-        Some((self.subcommand.as_ref().unwrap().as_str(), matched_flags, matched_args))
+        Some((
+            self.subcommand.as_ref().unwrap().as_str(),
+            matched_flags,
+            matched_args,
+        ))
     }
 
     pub fn add_cmd(mut self, name: &'static str, cmd: Cmd) -> Self {
@@ -129,10 +133,24 @@ impl MyCLI {
         println!("Usage: {} <COMMAND> [ARGS] [[-|--]FLAG]", self.program);
         println!("COMMANDS:");
 
+        let max_w = self.usage.iter().fold(0, |w, (name, arg, _)| {
+            let size = name.len() + arg.len();
+            if w < size {
+                size
+            } else {
+                w
+            }
+        });
+
         for (name, args, descripition) in self.usage.iter() {
-            println!(
-                "      {name} {args: <7}      {descripition}",
-            );
+            let part1 = format!("    {name} {args}");
+            let w = if max_w > part1.len() {
+                max_w + part1.len()
+            } else {
+                2 + descripition.len()
+            };
+            let part2 = format!("{:>w$}", descripition);
+            println!("{part1}   {part2}")
         }
     }
 }
@@ -141,7 +159,7 @@ impl MyCLI {
 pub struct Cmd {
     args: HashMap<u64, String>,
     flags: HashMap<String, Option<String>>,
-    help: Option<String>
+    help: Option<String>,
 }
 
 impl Cmd {
