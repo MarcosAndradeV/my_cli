@@ -6,6 +6,10 @@ A simple rust cli library inspired by clap builder.
 
 Justa copy an paste into your project. :)
 
+```console
+$ git clone git@github.com:MarcosAndradeV/my_cli.git
+```
+
 # Example
 
 ```rust
