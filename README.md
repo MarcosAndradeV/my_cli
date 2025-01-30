@@ -13,38 +13,39 @@ $ git clone git@github.com:MarcosAndradeV/my_cli.git
 # Example
 
 ```rust
-use my_cli::{Cmd, MyCLI};
+use my_cli::*;
 
 fn main() {
-    let cli = MyCLI::create_from_args()
-        .add_cmd(
-            "compile",
-            Cmd::new().arg("FILE", 1).flag("-o", "FILE").flag_bool("-r")
+    let cl = MyCLI::create_from_args()
+        .add_cmd("say", Cmd::new().arg("msg", 1)
+            .help("prints the message.")
         )
-        .add_cmd(
-            "say",
-            Cmd::new().arg("MSG", 1)
-        )
-    ;
-    match cli.get_matches() {
+        .add_cmd("sayTo",
+            Cmd::new()
+            .arg("msg", 1)
+            .flag("-t", "NAME")
+            .help("Prints the message to <NAME>.")
+        );
+    match cl.get_matches() {
         Some(("say", _, args)) => {
-            if let Some(msg) = args.get("MSG") {
-                println!("{msg}")
+            if let Some(msg) = args.get("msg") {
+                println!("You say: \"{msg}\"");
+            } else {
+                println!("Expected msg");
             }
         }
-        Some(("compile", flags, args)) => {
-            if let Some(file) = args.get("FILE") {
-                println!("{file}")
-            }
-            if let Some(Some(file)) = flags.get("-o") {
-                println!("{file}")
-            }
-            if let Some(None) = flags.get("-r") {
-                println!("-r")
+        Some(("sayTo", flags, args)) => {
+            if let Some(msg) = args.get("msg") {
+                if let Some(Some(name)) = flags.get("-t") {
+                    println!("You say: \"{msg}\"\nTo: {name}");
+                } else {
+                    println!("You say: \"{msg}\"");
+                }
             }
         }
-        _ => (),
+        _ =>  cl.usage(),
     }
 }
+
 
 ```
