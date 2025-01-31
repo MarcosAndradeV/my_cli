@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, process::exit};
+use std::{collections::HashMap, env, process::exit, rc::Rc};
 
 /// A simple CLI.
 /// `inputs` are anything that does not starts with `-` and `flags` are anything that does starts with `-`
@@ -26,7 +26,7 @@ impl MyCLI {
         let subcommand = args.next();
         let mut flags = vec![];
         let mut inputs = vec![];
-        let mut i = 1;
+        let mut i = 0;
         for arg in args {
             if arg.starts_with("-") {
                 flags.push(arg);
@@ -67,15 +67,9 @@ impl MyCLI {
         }
     }
 
-    pub fn get_matches(
-        &self,
-    ) -> Option<(
-        &str,
-        MatchedFlags,
-        HashMap<String, String>,
-    )> {
+    pub fn get_matches(&self) -> Option<(&str, MatchedFlags, MatchedArgs)> {
         let mut matched_flags: MatchedFlags = Default::default();
-        let mut matched_args: HashMap<String, String> = Default::default();
+        let mut matched_args: MatchedArgs = Default::default();
         let subcommand = match self.subcommand {
             Some(ref sc) => sc,
             None => return None,
@@ -88,15 +82,16 @@ impl MyCLI {
             }
         };
         let mut args = self.inputs.iter();
+        let req_flags: Rc<[&String]> = cmd.flags.iter().filter_map(|f| if f.1.required {Some(f.0)} else {None}).collect();
         for flag in &self.flags {
             match cmd.flags.get(flag) {
-                Some(None) => {
+                Some(Flag { required: _, boolean: true, value: _ }) => {
                     matched_flags.insert(flag.clone(), None);
                 }
-                Some(Some(a)) => loop {
+                Some(Flag { required: _, boolean:_, value }) => loop {
                     match args.next() {
                         Some((n, v)) if cmd.args.get(n).is_some() => {
-                            matched_args.insert(cmd.args.get(n).cloned().unwrap(), v.clone());
+                            matched_args.insert(*n, v.clone());
                             continue;
                         }
                         Some((_, v)) => {
@@ -104,9 +99,9 @@ impl MyCLI {
                             break;
                         }
                         None => {
-                            eprintln!("ERROR: flag `{flag}` expects a argument <{a}>");
+                            eprintln!("ERROR: flag `{flag}` expects a argument <{value}>");
                             exit(-1);
-                        },
+                        }
                     }
                 },
                 None => {
@@ -116,15 +111,20 @@ impl MyCLI {
             }
         }
 
+        if matched_flags.len() != req_flags.len() {
+            eprintln!("ERROR: Missing required flags {req_flags:?}");
+            exit(-1);
+        }
+
         for (n, v) in args {
-            let k = match cmd.args.get(n).cloned() {
-                Some(ok) => ok,
+            match cmd.args.get(n) {
+                Some(_) => (),
                 None => {
                     eprintln!("ERROR: Unexpected positional argument `{v}` at position {n}");
                     exit(-1);
-                },
-            };
-            matched_args.insert(k, v.clone());
+                }
+            }
+            matched_args.insert(*n, v.clone());
         }
 
         Some((
@@ -183,12 +183,40 @@ impl MatchedFlags {
     pub fn insert(&mut self, k: String, v: Option<String>) -> Option<Option<String>> {
         self.0.insert(k, v)
     }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+#[derive(Default)]
+pub struct MatchedArgs(HashMap<u64, String>);
+
+impl MatchedArgs {
+    pub fn get(&self, k: u64) -> Option<&String> {
+        self.0.get(&k)
+    }
+
+    pub fn is_present(&self, k: u64) -> bool {
+        self.0.get(&k).is_some()
+    }
+
+    pub fn insert(&mut self, k: u64, v: String) -> Option<String> {
+        self.0.insert(k, v)
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct Flag {
+    required: bool,
+    boolean: bool,
+    value: String
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct Cmd {
     args: HashMap<u64, String>,
-    flags: HashMap<String, Option<String>>,
+    flags: HashMap<String, Flag>,
     help: Option<String>,
 }
 
@@ -207,13 +235,13 @@ impl Cmd {
         self
     }
 
-    pub fn flag(mut self, name: &str, val: &str) -> Self {
-        self.flags.insert(name.to_string(), Some(val.to_string()));
+    pub fn flag(mut self, name: &str, val: &str, required: bool) -> Self {
+        self.flags.insert(name.to_string(), Flag { required, boolean: false, value: val.to_string() });
         self
     }
 
     pub fn flag_bool(mut self, name: &str) -> Self {
-        self.flags.insert(name.to_string(), None);
+        self.flags.insert(name.to_string(), Flag { required: false, boolean: true, value: String::new() });
         self
     }
 
@@ -227,12 +255,12 @@ impl Cmd {
 
         let mut iter = self.flags.iter().collect::<Vec<_>>();
         iter.sort();
-        for (fname, arg) in iter {
-            if let Some(arg) = arg {
-                args.push_str(&format!(" [{fname} "));
-                args.push_str(&format!("<{arg}>]"));
-            } else {
+        for (fname, flag) in iter {
+            if flag.boolean {
                 args.push_str(&format!(" [{fname}] "));
+            } else {
+                args.push_str(&format!(" [{fname} "));
+                args.push_str(&format!("<{}>]", flag.value));
             }
         }
         (args, self.help.clone().unwrap_or_default())
