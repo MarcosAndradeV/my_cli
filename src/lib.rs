@@ -82,7 +82,10 @@ impl MyCLI {
         };
         let cmd = match self.cmds.get(subcommand).cloned() {
             Some(c) => c,
-            None => return None,
+            None => {
+                eprintln!("ERROR: Unknown subcommand `{subcommand}`");
+                exit(-1);
+            }
         };
         let mut args = self.inputs.iter();
         for flag in &self.flags {
@@ -96,13 +99,9 @@ impl MyCLI {
                             matched_args.insert(cmd.args.get(n).cloned().unwrap(), v.clone());
                             continue;
                         }
-                        Some((_, v)) if v.starts_with("-") => {
+                        Some((_, v)) => {
                             matched_flags.insert(flag.clone(), Some(v.clone()));
                             break;
-                        }
-                        Some((at, v)) => {
-                            eprintln!("ERROR: Unexpected positional argument `{v}` at position {at}");
-                            exit(-1);
                         }
                         None => {
                             eprintln!("ERROR: flag `{flag}` expects a argument <{a}>");
@@ -110,7 +109,10 @@ impl MyCLI {
                         },
                     }
                 },
-                None => return None,
+                None => {
+                    eprintln!("ERROR: Unknown flag `{flag}`");
+                    exit(-1);
+                }
             }
         }
 
