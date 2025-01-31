@@ -143,7 +143,7 @@ impl MyCLI {
         println!("Usage: {} <COMMAND> [ARGS] [[-|--]FLAG]", self.program);
         println!("COMMANDS:");
 
-        let max_w = self.usage.iter().fold(0, |w, (name, arg, _)| {
+        let max_w = 5 + self.usage.iter().fold(0, |w, (name, arg, _)| {
             let size = name.len() + arg.len();
             if w < size {
                 size
@@ -152,15 +152,12 @@ impl MyCLI {
             }
         });
 
-        for (name, args, descripition) in self.usage.iter() {
-            let part1 = format!("    {name} {args}");
-            let w = if max_w > part1.len() {
-                max_w + part1.len()
-            } else {
-                2 + descripition.len()
-            };
-            let part2 = format!("{:>w$}", descripition);
-            println!("{part1}   {part2}")
+        dbg!(&max_w);
+
+        for (name, args, description) in self.usage.iter() {
+            let part1 = format!("    {name} {args}"); // Added indentation
+            let padding = " ".repeat(max_w.saturating_sub(part1.len())); // Calculate padding
+            println!("{part1}{padding} {}", description); // Print with padding
         }
     }
 }
