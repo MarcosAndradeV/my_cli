@@ -154,8 +154,6 @@ impl MyCLI {
             }
         });
 
-        dbg!(&max_w);
-
         for (name, args, description) in self.usage.iter() {
             let part1 = format!("    {name} {args}");
             let padding = " ".repeat(max_w.saturating_sub(part1.len()));
