@@ -111,7 +111,7 @@ impl MyCLI {
             }
         }
 
-        if matched_flags.len() != req_flags.len() {
+        if matched_flags.len() < req_flags.len() {
             eprintln!("ERROR: Missing required flags {req_flags:?}");
             exit(-1);
         }

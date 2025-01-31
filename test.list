@@ -1,0 +1,7 @@
+cargo run -q --bin test
+cargo run -q --bin test -- say Hi -d
+cargo run -q --bin test -- sayTo Hi -t Me
+echo "ERRORS"
+cargo run -q --bin test -- aaa
+cargo run -q --bin test -- say -d
+cargo run -q --bin test -- sayTo Hi
