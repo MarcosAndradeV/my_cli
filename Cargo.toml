@@ -14,5 +14,9 @@ exclude = ["bin/test.rs", "rere.py", "tests.list", "tests.list.bi"]
 [dependencies]
 
 [[bin]]
-name = "test"
-path = "bin/test.rs"
+name = "say"
+path = "bin/say.rs"
+
+[[bin]]
+name = "mult"
+path = "bin/mult.rs"
